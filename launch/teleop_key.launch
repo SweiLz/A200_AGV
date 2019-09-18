@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="linear_vel_max" default="0.09"/>
+    <arg name="linear_vel_step" default="0.01"/>
+    <arg name="angular_vel_max" default="0.45"/>
+    <arg name="angular_vel_step" default="0.05"/>
+
+    <node pkg="a200_agv" name="teleop_key" type="teleop_key_diffdrive.py" output="screen">
+        <param name="linear_vel_max" value="$(arg linear_vel_max)"/>
+        <param name="angular_vel_max" value="$(arg angular_vel_max)"/>
+        <param name="linear_vel_step" value="$(arg linear_vel_step)"/>
+        <param name="angular_vel_step" value="$(arg angular_vel_step)"/>
+    </node>
+</launch>

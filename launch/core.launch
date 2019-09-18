@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="port" default="/dev/ttyACM0"/>
+    <arg name="baudrate" default="115200"/>
+
+    <arg name="wheel_separation" default="0.65"/>
+    <arg name="wheel_radius" default="0.08"/>
+
+    <arg name="min_linear_velocity" default="-0.5"/>
+    <arg name="max_linear_velocity" default="0.5"/>
+    <arg name="min_angular_velocity" default="-100.5"/>
+    <arg name="max_angular_velocity" default="100.5"/>
+
+    <arg name="publish_odom_frame" default="true"/>
+    <arg name="odom_topic" default="odom"/>
+    <arg name="cmd_topic" default="cmd_vel"/>
+
+    <node pkg="a200_agv" type="a200_agv_node" name="a200_agv" output="screen">
+        <param name="port" value="$(arg port)"/>
+        <param name="baudrate" value="$(arg baudrate)"/>
+
+        <param name="wheel_separation" value="$(arg wheel_separation)"/>
+        <param name="wheel_radius" value="$(arg wheel_radius)"/>
+
+        <param name="min_linear_velocity" value="$(arg min_linear_velocity)"/>
+        <param name="max_linear_velocity" value="$(arg max_linear_velocity)"/>
+        <param name="min_angular_velocity" value="$(arg min_angular_velocity)"/>
+        <param name="max_angular_velocity" value="$(arg max_angular_velocity)"/>
+
+        <param name="publish_odom_frame" value="$(arg publish_odom_frame)"/>
+        <param name="odom_topic" value="$(arg odom_topic)"/>
+        <param name="cmd_topic" value="$(arg cmd_topic)"/>
+    </node>
+</launch>
