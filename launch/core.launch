@@ -4,13 +4,13 @@
     <arg name="port" default="/dev/ttyACM0"/>
     <arg name="baudrate" default="115200"/>
 
-    <arg name="wheel_separation" default="0.65"/>
-    <arg name="wheel_radius" default="0.08"/>
+    <arg name="wheel_separation" default="0.375"/>
+    <arg name="wheel_radius" default="0.105"/>
 
     <arg name="min_linear_velocity" default="-0.5"/>
     <arg name="max_linear_velocity" default="0.5"/>
-    <arg name="min_angular_velocity" default="-100.5"/>
-    <arg name="max_angular_velocity" default="100.5"/>
+    <arg name="min_angular_velocity" default="-0.45"/>
+    <arg name="max_angular_velocity" default="0.45"/>
 
     <arg name="publish_odom_frame" default="true"/>
     <arg name="odom_topic" default="odom"/>

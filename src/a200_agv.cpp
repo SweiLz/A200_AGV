@@ -103,6 +103,7 @@ int main(int argc, char **argv)
 
     last_time = ros::Time::now();
 
+#define SERIAL
 #ifdef SERIAL
     while (ros::ok())
     {
@@ -117,6 +118,7 @@ int main(int argc, char **argv)
         if (_comm.isOpen())
         {
             ROS_INFO_STREAM("Successfully connected to port.");
+            setPID(&_comm,10,100);
             try
             {
                 ros::spin();
@@ -182,19 +184,20 @@ void initOdom(void)
 
 void controlMotorTimer(const ros::TimerEvent &event)
 {
-    ROS_INFO_STREAM("Write vel to motor");
+    // ROS_INFO_STREAM("Write vel to motor");
 
     goal_wheel_vel[LEFT] = (goal_velocity_from_cmd[LINEAR] - wheel_separation / 2.0 * goal_velocity_from_cmd[ANGULAR]) / wheel_radius;
     goal_wheel_vel[RIGHT] = -(goal_velocity_from_cmd[LINEAR] + wheel_separation / 2.0 * goal_velocity_from_cmd[ANGULAR]) / wheel_radius;
 
 #ifdef SERIAL
-// writeVel(&_comm, goal_wheel_vel[LEFT], goal_wheel_vel[RIGHT]);
+    writeVel(&_comm, goal_wheel_vel[LEFT], goal_wheel_vel[RIGHT]);
+    // writeVel(&_comm, 0.5, 0.5);
 #endif
 }
 
 void publishOdomTimer(const ros::TimerEvent &event)
 {
-    ROS_INFO_STREAM("Publish odom");
+    // ROS_INFO_STREAM("Publish odom");
     static tf::TransformBroadcaster tf_broadcaster;
 
     ros::Time current_time = ros::Time::now();
@@ -225,21 +228,21 @@ void publishOdomTimer(const ros::TimerEvent &event)
 
 void calOdomTimer(const ros::TimerEvent &event)
 {
-    ROS_INFO_STREAM("Calculate odom");
+    // ROS_INFO_STREAM("Calculate odom");
     ros::Time current_time = ros::Time::now();
     ros::Duration dt = current_time - last_time;
     last_time = current_time;
 
 #ifdef SERIAL
-// readVel(&_comm, wheel_vel);
+readVel(&_comm, wheel_vel);
 // ROS_INFO_STREAM(wheel_vel[0] << ", " << wheel_vel[1]);
 #endif
 
     float vL = wheel_vel[LEFT] * wheel_radius;
     float vR = wheel_vel[RIGHT] * wheel_radius;
-
-    twist.x = (-vR + vL) / 2.0 + 0.01;
-    twist.theta = (-vR - vL) / wheel_separation + 0.05;
+ROS_INFO_STREAM(vL << ", " << vR);
+    twist.x = (-vR + vL) / 2.0;
+    twist.theta = (-vR - vL) / wheel_separation;
 
     pose.x += (twist.x * cos(pose.theta)) * dt.toSec();
     pose.y += (twist.x * sin(pose.theta)) * dt.toSec();

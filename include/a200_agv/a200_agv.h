@@ -51,53 +51,126 @@ uint16_t update_crc(uint8_t *data_blk_ptr, uint16_t data_blk_size)
     return crc_accum;
 }
 
+union BFloat {
+    float data;
+    uint8_t bytes[4];
+};
+
+union BInt {
+    int32_t data;
+    uint8_t bytes[4];
+};
+
 void writeVel(serial::Serial *ser, float WL, float WR)
 {
-    int32_t nint = 628;
-    uint8_t data[16] = {0xFF, 0xFF, 0xFD, 0x00};
-    data[4] = 0x01;
-    data[5] = 0x09;
-    data[6] = 0x00;
-    data[7] = 0x03;
-    data[8] = 0x68;
-    data[9] = 0x00;
-    data[10] = nint & 0x000000FF;
-    data[11] = (nint & 0x0000FF00) >> 8;
-    data[12] = (nint & 0x00FF0000) >> 16;
-    data[13] = (nint & 0xFF000000) >> 24;
+    BInt bint;
+    bint.data = (int32_t)(WL * 100);
+    uint8_t data[16] = {0xFF, 0xFF, 0xFD, 0x00, 0x00, 0x09, 0x00, 0x03, 0x68, 0x00};
+    data[4] = 0x02;
+    memcpy(&data[10], &bint, 4);
 
-    // uint8_t data[10] = {0xFF, 0xFF, 0xFD, 0x00, 0xFE, 0x03, 0x00, 0x01};
-    // uint8_t data[14] = {0xFF, 0xFF, 0xFD, 0x00, 0x01, 0x07, 0x00, 0x02, 0x84, 0x00};
-    // data[10] = 0x04;
-    // data[11] = 0x00;
     uint16_t crc = update_crc(data, 14);
     data[14] = crc & 0xFF;
     data[15] = (crc >> 8) & 0x00FF;
 
-    // ROS_INFO_STREAM(goal_velocity_from_cmd[ANGULAR] * 100);
-    for (int i = 0; i < 16; ++i)
-        std::cout << std::hex << (int)data[i] << " ";
-    std::cout << "\n";
+    ser->flushOutput();
     ser->write(data, 16);
+
+    bint.data = (int32_t)(WR * 100);
+    data[4] = 0x01;
+    memcpy(&data[10], &bint, 4);
+
+    crc = update_crc(data, 14);
+    data[14] = crc & 0xFF;
+    data[15] = (crc >> 8) & 0x00FF;
+
+    ser->flushOutput();
+    ser->write(data, 16);
+
+    // ROS_INFO_STREAM(goal_velocity_from_cmd[ANGULAR] * 100);
+    // for (int i = 0; i < 16; ++i)
+    //     std::cout << std::hex << (int)data[i] << " ";
+    // std::cout << "\n";
 }
 
 void readVel(serial::Serial *ser, float *w_vel)
 {
+    BInt bint;
+    uint8_t data[15];
     uint8_t cmd[14] = {0xFF, 0xFF, 0xFD, 0x00, 0x01, 0x07, 0x00, 0x02, 0x80, 0x00, 0x04, 0x00, 0x1E, 0xC5};
+
+    ser->flushOutput();
+    ser->flushInput();
     ser->write(cmd, 14);
     if (ser->waitReadable())
     {
-        uint8_t data[15];
-        // ser->read(data, 15);
-        ROS_INFO_STREAM("Readable << " << ser->read(data, 15) << ", " << ser->available());
-        for (int i = 0; i < 15; ++i)
-            std::cout
-                << std::hex << (int)data[i] << " ";
-        std::cout << "\n";
+        size_t size = ser->read(data, 15);
+        uint16_t crc = update_crc(data, size - 2);
+        uint16_t data_crc = (data[14] << 8) | data[13];
+        if (crc == data_crc)
+        {
+            memcpy(&bint, &data[9], 4);
+            w_vel[1] = bint.data / 100.0;
+        }
     }
     else
     {
         ROS_ERROR_STREAM("Read Error");
     }
+
+    cmd[4] = 0x02;
+    cmd[12] = 0x14;
+    cmd[13] = 0xF5;
+    ser->flushOutput();
+    ser->flushInput();
+    ser->write(cmd, 14);
+    if (ser->waitReadable())
+    {
+        size_t size = ser->read(data, 15);
+        uint16_t crc = update_crc(data, size - 2);
+        uint16_t data_crc = (data[14] << 8) | data[13];
+        if (crc == data_crc)
+        {
+            memcpy(&bint, &data[9], 4);
+            w_vel[0] = bint.data / 100.0;
+        }
+    }
+    else
+    {
+        ROS_ERROR_STREAM("Read Error");
+    }
+
+    // ROS_INFO_STREAM("Read << " << std::hex << (int)data[9]);
+    // for (int i = 0; i < 15; ++i)
+    //     std::cout
+    //         << std::hex << (int)data[i] << " ";
+    // std::cout << "\n";
+}
+
+void setPID(serial::Serial *ser, uint16_t Kp, uint16_t Ki)
+{
+    uint8_t cmd[16] = {0xFF, 0xFF, 0xFD, 0x00, 0x00, 0x09, 0x00, 0x03, 0x4C, 0x00};
+    cmd[4] = 0x02;
+    cmd[10] = Ki & 0xFF;
+    cmd[11] = (Ki >> 8) & 0xFF;
+    cmd[12] = Kp & 0xFF;
+    cmd[13] = (Kp >> 8) & 0xFF;
+
+    uint16_t crc = update_crc(cmd, 14);
+    cmd[14] = crc & 0xFF;
+    cmd[15] = (crc >> 8) & 0x00FF;
+    ser->flushOutput();
+    ser->write(cmd, 16);
+
+    cmd[4] = 0x01;
+    crc = update_crc(cmd, 14);
+    cmd[14] = crc & 0xFF;
+    cmd[15] = (crc >> 8) & 0x00FF;
+    ser->flushOutput();
+    ser->write(cmd, 16);
+
+    for (int i = 0; i < 16; ++i)
+        std::cout << std::hex << (int)cmd[i] << " ";
+    std::cout << "\n";
 }
 #endif
