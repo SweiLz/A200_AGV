@@ -1,0 +1,11 @@
+#http://www.reactivated.net/writing_udev_rules.html
+
+#sudo cp 99-a200_agv.rules /etc/udev/rules.d/
+#sudo udevadm control --reload-rules
+#sudo udevadm trigger
+
+# Base
+KERNEL=="ttyACM*", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", MODE:="0777", SYMLINK="a200_agv_base"
+
+# YDLidar X4
+KERNEL=="ttyUSB*", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", GROUP:="dialout", MODE:="0777", SYMLINK="a200_agv_lidar"

@@ -86,10 +86,10 @@ int main(int argc, char **argv)
     nh_.param<std::string>("odom_frame_id", odom.header.frame_id, "odom");
     nh_.param<std::string>("base_frame_id", odom.child_frame_id, "base_footprint");
 
-    cmdvel_sub = nh.subscribe("cmd_vel", 10, cmdvelCB);
+    cmdvel_sub = nh.subscribe(cmd_topic, 10, cmdvelCB);
     reset_sub = nh.subscribe("reset", 1, resetCB);
     odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 10);
-
+    ROS_INFO_STREAM(cmd_topic);
     ros::Timer controlMotor = nh.createTimer(ros::Duration(0.15), controlMotorTimer);
     ros::Timer publishOdom = nh.createTimer(ros::Duration(0.1), publishOdomTimer);
     ros::Timer calOdom = nh.createTimer(ros::Duration(0.05), calOdomTimer);
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
         if (_comm.isOpen())
         {
             ROS_INFO_STREAM("Successfully connected to port.");
-            setPID(&_comm,10,100);
+            setPID(&_comm, 250, 0);
             try
             {
                 ros::spin();
@@ -234,13 +234,13 @@ void calOdomTimer(const ros::TimerEvent &event)
     last_time = current_time;
 
 #ifdef SERIAL
-readVel(&_comm, wheel_vel);
+    readVel(&_comm, wheel_vel);
 // ROS_INFO_STREAM(wheel_vel[0] << ", " << wheel_vel[1]);
 #endif
 
     float vL = wheel_vel[LEFT] * wheel_radius;
     float vR = wheel_vel[RIGHT] * wheel_radius;
-ROS_INFO_STREAM(vL << ", " << vR);
+    //ROS_INFO_STREAM(vL << ", " << vR);
     twist.x = (-vR + vL) / 2.0;
     twist.theta = (-vR - vL) / wheel_separation;
 

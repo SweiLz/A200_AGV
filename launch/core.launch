@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-    <arg name="port" default="/dev/ttyACM0"/>
+    <arg name="port" default="/dev/a200_agv_base"/>
     <arg name="baudrate" default="115200"/>
 
     <arg name="wheel_separation" default="0.375"/>
@@ -16,7 +16,7 @@
     <arg name="odom_topic" default="odom"/>
     <arg name="cmd_topic" default="cmd_vel"/>
 
-    <node pkg="a200_agv" type="a200_agv_node" name="a200_agv" output="screen">
+    <node pkg="a200_agv" type="a200_agv_node" name="base_controller" output="screen">
         <param name="port" value="$(arg port)"/>
         <param name="baudrate" value="$(arg baudrate)"/>
 

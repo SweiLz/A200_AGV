@@ -115,7 +115,7 @@ void readVel(serial::Serial *ser, float *w_vel)
     }
     else
     {
-        ROS_ERROR_STREAM("Read Error");
+        //ROS_ERROR_STREAM("Read Error");
     }
 
     cmd[4] = 0x02;
@@ -137,7 +137,7 @@ void readVel(serial::Serial *ser, float *w_vel)
     }
     else
     {
-        ROS_ERROR_STREAM("Read Error");
+        //ROS_WARN_STREAM("ReadFail");
     }
 
     // ROS_INFO_STREAM("Read << " << std::hex << (int)data[9]);
